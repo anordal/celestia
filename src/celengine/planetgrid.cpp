@@ -14,6 +14,7 @@
 #include "planetgrid.h"
 #include "body.h"
 #include "vecgl.h"
+#include <celmath/mathlib.h>
 #include <celmath/intersect.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
