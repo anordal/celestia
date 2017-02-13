@@ -27,6 +27,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
 #include <cassert>
 
 #ifndef _WIN32
