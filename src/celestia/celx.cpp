@@ -298,14 +298,7 @@ void CelxLua::initMaps()
 
 static void getField(lua_State* l, int index, const char* key)
 {
-    // When we move to Lua 5.1, this will be replaced by:
-    // lua_getfield(l, index, key);
-    lua_pushstring(l, key);
-
-    if (index != LUA_GLOBALSINDEX && index != LUA_REGISTRYINDEX)
-        lua_gettable(l, index - 1);
-    else
-        lua_gettable(l, index);
+    lua_getfield(l, index, key);
 }
 
 
@@ -587,8 +580,7 @@ void LuaState::cleanup()
             lua_pop(state,1);
         }
     }
-    lua_pushstring(costate, CleanupCallback);
-    lua_gettable(costate, LUA_GLOBALSINDEX);
+    lua_getglobal(costate, CleanupCallback);
     if (lua_isnil(costate, -1))
     {
         return;
@@ -658,7 +650,11 @@ static int resumeLuaThread(lua_State *L, lua_State *co, int narg)
     //   luaL_error(L, "too many arguments to resume");
     lua_xmove(L, co, narg);
 
+#if LUA_VER >= 0x050200
+    status = lua_resume(co, NULL, narg);
+#else
     status = lua_resume(co, narg);
+#endif
 #if LUA_VER >= 0x050100
     if (status == 0 || status == LUA_YIELD)
 #else
@@ -772,8 +768,7 @@ bool LuaState::charEntered(const char* c_p)
     int stack_top = lua_gettop(costate);
 #endif
     bool result = true;
-    lua_pushstring(costate, KbdCallback);
-    lua_gettable(costate, LUA_GLOBALSINDEX);
+    lua_getglobal(costate, KbdCallback);
     lua_pushstring(costate, c_p);
     timeout = getTime() + 1.0;
     if (lua_pcall(costate, 1, 1, 0) != 0)
@@ -965,8 +960,11 @@ int LuaState::loadScript(istream& in, const string& streamname)
         lua_pushstring(state, streamname.c_str());
         lua_settable(state, LUA_REGISTRYINDEX);
     }
-
+#if LUA_VER >= 0x050200
+    int status = lua_load(state, readStreamChunk, &info, streamname.c_str(), NULL);
+#else
     int status = lua_load(state, readStreamChunk, &info, streamname.c_str());
+#endif
     if (status != 0)
         cout << "Error loading script: " << lua_tostring(state, -1) << '\n';
 
@@ -3161,8 +3159,7 @@ static int celestia_requestkeyboard(lua_State* l)
     if (lua_toboolean(l, 2))
     {
         // Check for existence of charEntered:
-        lua_pushstring(l, KbdCallback);
-        lua_gettable(l, LUA_GLOBALSINDEX);
+        lua_getglobal(l, KbdCallback);
         if (lua_isnil(l, -1))
         {
             Celx_DoError(l, "script requested keyboard, but did not provide callback");
@@ -3562,16 +3559,14 @@ bool LuaState::init(CelestiaCore* appCore)
         return false;
     }
 
-    lua_pushstring(state, "KM_PER_MICROLY");
     lua_pushnumber(state, (lua_Number)KM_PER_LY/1e6);
-    lua_settable(state, LUA_GLOBALSINDEX);
+    lua_setglobal(state, "KM_PER_MICROLY");
 
     loadLuaLibs(state);
 
     // Create the celestia object
-    lua_pushstring(state, "celestia");
     celestia_new(state, appCore);
-    lua_settable(state, LUA_GLOBALSINDEX);
+    lua_setglobal(state, "celestia");
     // add reference to appCore in the registry
     lua_pushstring(state, "celestia-appcore");
     lua_pushlightuserdata(state, static_cast<void*>(appCore));
@@ -3607,7 +3602,7 @@ bool LuaState::init(CelestiaCore* appCore)
 void LuaState::setLuaPath(const string& s)
 {
 #if LUA_VER >= 0x050100
-    lua_getfield(state, LUA_GLOBALSINDEX, "package");
+    lua_getglobal(state, "package");
     lua_pushstring(state, s.c_str());
     lua_setfield(state, -2, "path");
     lua_pop(state, 1);
@@ -4121,7 +4116,7 @@ void LuaState::allowLuaPackageAccess()
     openLuaLibrary(state, LUA_LOADLIBNAME, luaopen_package);
 
     // Disallow loadlib
-    lua_getfield(state, LUA_GLOBALSINDEX, "package");
+    lua_getglobal(state, "package");
     lua_pushnil(state);
     lua_setfield(state, -2, "loadlib");
     lua_pop(state, 1);
