@@ -143,7 +143,7 @@ static int observer_orbit(lua_State* l)
 {
     CelxLua celx(l);
     celx.checkArgs(2, 2, "One argument required for orbit");
-    
+
     Observer* o = this_observer(l);
 
     Quatd* q = celx.toRotation(2);
