@@ -29,7 +29,10 @@ EXTRA_DIST = \
 splashdir = $(pkgdatadir)/splash
 splash_DATA = splash.png
 
-SUBDIRS = src data extras extras-standard textures models shaders fonts po po2 locale scripts
+SUBDIRS = src data extras extras-standard textures models shaders fonts locale scripts
+# FIXME: Translation makefiles are broken: MKDIR_P is an empty string.
+# Disabling translations for now.
+#SUBDIRS += po po2
 
 # Non-automake directories
 NONAUTO = admin macosx windows
