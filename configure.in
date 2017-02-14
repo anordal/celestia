@@ -7,6 +7,9 @@ AC_PREREQ(2.57)
 AC_INIT([celestia], [1.6.0], [celestia-developers@lists.sf.net])
 AC_CONFIG_SRCDIR(acinclude.m4)
 
+dnl Always link with OpenGL
+: ${LDFLAGS="-lGL"}
+
 dnl The following section confirms that the user provided necessary option
 dnl BEFORE anything is checked.
 
