@@ -504,7 +504,7 @@ LuaState::LuaState() :
     ioMode(NoIO),
     eventHandlerEnabled(false)
 {
-    state = lua_open();
+    state = luaL_newstate();
     timer = CreateTimer();
     screenshotCount = 0;
 }
